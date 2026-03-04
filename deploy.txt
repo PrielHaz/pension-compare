@@ -1,4 +1,9 @@
+first deploy:
 npm install -g netlify-cli
 netlify login
 netlify init
+netlify deploy --prod
+
+deploy after updates:
+npm run build
 netlify deploy --prod

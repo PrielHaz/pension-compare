@@ -3,7 +3,7 @@
 A small, free web simulator to help compare pension fund management fees (קרן פנסיה) over time.
 
 Live app:
-https://69a82cc943bc181fa3653a41--pensioncompare.netlify.app/
+https://pension-compare.netlify.app/
 
 GitHub repo:
 https://github.com/PrielHaz/pension-compare
@@ -20,7 +20,7 @@ This tool simulates both over many years and shows the cumulative fees you would
 ## What you enter
 
 - Current accumulation
-- Monthly deposit
+- Monthly deposit - auto-calculated from gross salary using common presets (20.83% / 18.5%), with editable breakdown (employee, employer benefits, employer severance) - or a manual fixed amount
 - Assumed annual return (% per year)
 - Salary/deposit growth (annual % or fixed NIS)
 - For each fund: accumulation-fee % + deposit-fee %

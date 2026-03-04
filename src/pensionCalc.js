@@ -17,8 +17,13 @@ export const DEFAULT_FUNDS = [
 ];
 
 export const DEFAULT_PARAMS = {
-  monthlyDeposit: 5500,
-  currentAccumulation: 27400,
+  depositMode: 'salary',        // 'salary' or 'manual'
+  salary: 14000,                // gross monthly salary in NIS
+  employeePercent: 6,           // employee contribution % (הפקדת עובד)
+  employerBenefitPercent: 6.5,  // employer benefit contribution % (הפקדת מעסיק תגמולים)
+  employerSeverancePercent: 8.33, // employer severance contribution % (הפקדת מעסיק פיצויים)
+  monthlyDeposit: 5500,         // used only in manual mode
+  currentAccumulation: 30000,
   startYear: 2026,
   endYear: 2070,
   salaryGrowthMode: 'percent', // 'percent' or 'fixed'
@@ -26,6 +31,14 @@ export const DEFAULT_PARAMS = {
   salaryGrowthFixed: 500,       // fixed NIS added to monthly deposit per year
   estimatedReturn: 8,           // estimated yearly return %
 };
+
+/**
+ * Calculate monthly deposit from salary and contribution percentages.
+ */
+export function calcMonthlyDepositFromSalary(salary, employeePercent, employerBenefitPercent, employerSeverancePercent) {
+  const totalPercent = employeePercent + employerBenefitPercent + employerSeverancePercent;
+  return salary * (totalPercent / 100);
+}
 
 /**
  * Calculate yearly data for a single fund.

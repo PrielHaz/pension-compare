@@ -5,6 +5,7 @@ import {
 import {
   DEFAULT_FUNDS, DEFAULT_PARAMS,
   calculateFundData, buildComparisonData, generateRecommendation, buildYearlyComparisonTable,
+  calcMonthlyDepositFromSalary,
 } from './pensionCalc';
 import './App.css';
 
@@ -32,6 +33,11 @@ function CustomTooltip({ active, payload, label }) {
 
 function App() {
   const [funds, setFunds] = useState(DEFAULT_FUNDS);
+  const [depositMode, setDepositMode] = useState(DEFAULT_PARAMS.depositMode);
+  const [salary, setSalary] = useState(DEFAULT_PARAMS.salary);
+  const [employeePercent, setEmployeePercent] = useState(DEFAULT_PARAMS.employeePercent);
+  const [employerBenefitPercent, setEmployerBenefitPercent] = useState(DEFAULT_PARAMS.employerBenefitPercent);
+  const [employerSeverancePercent, setEmployerSeverancePercent] = useState(DEFAULT_PARAMS.employerSeverancePercent);
   const [monthlyDeposit, setMonthlyDeposit] = useState(DEFAULT_PARAMS.monthlyDeposit);
   const [currentAccumulation, setCurrentAccumulation] = useState(DEFAULT_PARAMS.currentAccumulation);
   const [startYear] = useState(DEFAULT_PARAMS.startYear);
@@ -41,13 +47,20 @@ function App() {
   const [salaryGrowthFixed, setSalaryGrowthFixed] = useState(DEFAULT_PARAMS.salaryGrowthFixed);
   const [estimatedReturn, setEstimatedReturn] = useState(DEFAULT_PARAMS.estimatedReturn);
 
+  const effectiveMonthlyDeposit = useMemo(() => {
+    if (depositMode === 'salary') {
+      return Math.round(calcMonthlyDepositFromSalary(salary, employeePercent, employerBenefitPercent, employerSeverancePercent));
+    }
+    return monthlyDeposit;
+  }, [depositMode, salary, employeePercent, employerBenefitPercent, employerSeverancePercent, monthlyDeposit]);
+
   // New fund form state
   const [newFundName, setNewFundName] = useState('');
   const [newFundAccFee, setNewFundAccFee] = useState('');
   const [newFundDepFee, setNewFundDepFee] = useState('');
 
   const params = useMemo(() => ({
-    monthlyDeposit,
+    monthlyDeposit: effectiveMonthlyDeposit,
     currentAccumulation,
     startYear,
     endYear,
@@ -55,7 +68,7 @@ function App() {
     salaryGrowthPercent,
     salaryGrowthFixed,
     estimatedReturn,
-  }), [monthlyDeposit, currentAccumulation, startYear, endYear, salaryGrowthMode, salaryGrowthPercent, salaryGrowthFixed, estimatedReturn]);
+  }), [effectiveMonthlyDeposit, currentAccumulation, startYear, endYear, salaryGrowthMode, salaryGrowthPercent, salaryGrowthFixed, estimatedReturn]);
 
   const comparisonData = useMemo(() => buildComparisonData(funds, params), [funds, params]);
   const recommendation = useMemo(() => generateRecommendation(funds, params), [funds, params]);
@@ -114,6 +127,7 @@ function App() {
       <section className="section assumptions-section">
         <h2>הנחות החישוב</h2>
         <ul className="assumptions-list">
+          <li><strong>הפקדה חודשית</strong> - מחושבת מהשכר ברוטו לפי אחוזי ההפקדה (עובד + מעסיק תגמולים + מעסיק פיצויים), או כסכום ידני קבוע</li>
           <li><strong>דמי ניהול מצבירה</strong> - מחושבים על שווי הצבירה בתחילת כל שנה (לפני הפקדות ותשואה של אותה שנה)</li>
           <li><strong>דמי ניהול מהפקדה</strong> - מחושבים על סך ההפקדות השנתיות (הפקדה חודשית &times; 12)</li>
           <li><strong>תשואה מוערכת</strong> - בסוף כל שנה, הצבירה (כולל הפקדות השנה) גדלה לפי אחוז התשואה שהוגדר. תשואה זהה לכל הקרנות</li>
@@ -126,15 +140,120 @@ function App() {
       {/* Input Section */}
       <section className="section inputs-section">
         <h2>הנתונים שלך</h2>
-        <div className="inputs-grid">
-          <div className="input-group">
-            <label>הפקדה חודשית (&#8362;)</label>
-            <input
-              type="number"
-              value={monthlyDeposit}
-              onChange={e => setMonthlyDeposit(Number(e.target.value))}
-            />
+
+        {/* Deposit Mode Section */}
+        <div className="deposit-section">
+          <h3>הפקדה חודשית לפנסיה</h3>
+          <div className="growth-mode-toggle">
+            <button
+              className={`toggle-btn ${depositMode === 'salary' ? 'active' : ''}`}
+              onClick={() => setDepositMode('salary')}
+            >
+              חישוב מהשכר
+            </button>
+            <button
+              className={`toggle-btn ${depositMode === 'manual' ? 'active' : ''}`}
+              onClick={() => setDepositMode('manual')}
+            >
+              סכום ידני
+            </button>
           </div>
+
+          {depositMode === 'salary' ? (
+            <div className="salary-deposit-area">
+              <div className="inputs-grid">
+                <div className="input-group">
+                  <label>שכר ברוטו חודשי (&#8362;)</label>
+                  <input
+                    type="number"
+                    value={salary}
+                    onChange={e => setSalary(Number(e.target.value))}
+                    min={0}
+                  />
+                </div>
+              </div>
+
+              <div className="severance-presets">
+                <span className="preset-label">תבניות מקובלות:</span>
+                <button
+                  className={`preset-btn ${employeePercent === 6 && employerBenefitPercent === 6.5 && employerSeverancePercent === 8.33 ? 'active' : ''}`}
+                  onClick={() => { setEmployeePercent(6); setEmployerBenefitPercent(6.5); setEmployerSeverancePercent(8.33); }}
+                >
+                  20.83% (פיצויים מלאים)
+                </button>
+                <button
+                  className={`preset-btn ${employeePercent === 6 && employerBenefitPercent === 6.5 && employerSeverancePercent === 6 ? 'active' : ''}`}
+                  onClick={() => { setEmployeePercent(6); setEmployerBenefitPercent(6.5); setEmployerSeverancePercent(6); }}
+                >
+                  18.5% (פיצויים 6%)
+                </button>
+              </div>
+
+              <div className="contribution-breakdown">
+                <div className="contribution-row">
+                  <label>הפקדת עובד (אתה)</label>
+                  <div className="contribution-input-wrap">
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={employeePercent}
+                      onChange={e => setEmployeePercent(Number(e.target.value))}
+                      min={0}
+                    />
+                    <span className="percent-sign">%</span>
+                  </div>
+                  <span className="contribution-amount">{formatCurrency(Math.round(salary * employeePercent / 100))}</span>
+                </div>
+                <div className="contribution-row">
+                  <label>הפקדת מעסיק (תגמולים)</label>
+                  <div className="contribution-input-wrap">
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={employerBenefitPercent}
+                      onChange={e => setEmployerBenefitPercent(Number(e.target.value))}
+                      min={0}
+                    />
+                    <span className="percent-sign">%</span>
+                  </div>
+                  <span className="contribution-amount">{formatCurrency(Math.round(salary * employerBenefitPercent / 100))}</span>
+                </div>
+                <div className="contribution-row">
+                  <label>הפקדת מעסיק (פיצויים)</label>
+                  <div className="contribution-input-wrap">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={employerSeverancePercent}
+                      onChange={e => setEmployerSeverancePercent(Number(e.target.value))}
+                      min={0}
+                    />
+                    <span className="percent-sign">%</span>
+                  </div>
+                  <span className="contribution-amount">{formatCurrency(Math.round(salary * employerSeverancePercent / 100))}</span>
+                </div>
+                <div className="contribution-total">
+                  <label>סה"כ הפקדה חודשית</label>
+                  <span className="total-percent">{(employeePercent + employerBenefitPercent + employerSeverancePercent).toFixed(2)}%</span>
+                  <span className="total-amount">{formatCurrency(effectiveMonthlyDeposit)}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="inputs-grid">
+              <div className="input-group">
+                <label>הפקדה חודשית (&#8362;)</label>
+                <input
+                  type="number"
+                  value={monthlyDeposit}
+                  onChange={e => setMonthlyDeposit(Number(e.target.value))}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="inputs-grid" style={{ marginTop: '1rem' }}>
           <div className="input-group">
             <label>צבירה נוכחית (&#8362;)</label>
             <input
