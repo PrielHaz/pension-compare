@@ -1,0 +1,4 @@
+npm install -g netlify-cli
+netlify login
+netlify init
+netlify deploy --prod

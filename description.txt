@@ -1,0 +1,3 @@
+Repo name: pension-compare
+
+Description: Interactive tool for comparing pension fund management fees over time, with charts, yearly comparison tables, and smart recommendations for when to switch funds. Default funds are managed by: אלטשולר שחם גמל ופנסיה בע"מ, מיטב בית השקעות, אינפינטי ניהול השתלמות וגמל בע"מ, מור קופות גמל בע"מ.
