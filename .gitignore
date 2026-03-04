@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Netlify folder
+.netlify
+
+# Local content drafts
+linkedin_post_en.txt
+linkedin_post_he.txt

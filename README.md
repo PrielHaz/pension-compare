@@ -1,16 +1,74 @@
-# React + Vite
+# PensionCompare
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small, free web simulator to help compare pension fund management fees (קרן פנסיה) over time.
 
-Currently, two official plugins are available:
+Live app:
+https://69a82cc943bc181fa3653a41--pensioncompare.netlify.app/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+GitHub repo:
+https://github.com/PrielHaz/pension-compare
 
-## React Compiler
+## Why
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+When comparing pension funds, it’s hard to reason about which fee matters more:
 
-## Expanding the ESLint configuration
+- Fee from the accumulated balance (דמי ניהול מצבירה)
+- Fee from deposits (דמי ניהול מהפקדה)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+This tool simulates both over many years and shows the cumulative fees you would pay under each fund’s fee structure.
+
+## What you enter
+
+- Current accumulation
+- Monthly deposit
+- Assumed annual return (% per year)
+- Salary/deposit growth (annual % or fixed NIS)
+- For each fund: accumulation-fee % + deposit-fee %
+
+You can also add/remove funds to compare.
+
+## What you get
+
+- Cumulative-fees chart over the years (per fund)
+- Yearly comparison table (cumulative fees) with the cheapest fund highlighted
+- Recommendation timeline: which fund is cheapest by cumulative fees for each period (and when it might make sense to switch)
+- Per-fund breakdown charts (deposit fee vs accumulation fee vs total fee per year)
+
+## Assumptions (important)
+
+This simulator compares fees only.
+
+- The same assumed annual return is applied to all funds
+- Fees are modeled as constant percentages לאורך השנים
+- Accumulation fee is calculated on the start-of-year accumulation
+- Deposit fee is calculated on the total yearly deposits
+
+This project is for general comparison and is not financial/pension advice.
+
+## Local development
+
+Prerequisites: Node.js (LTS recommended)
+
+Install:
+
+```bash
+npm install
+```
+
+Run dev server:
+
+```bash
+npm run dev
+```
+
+Build:
+
+```bash
+npm run build
+```
+
+Preview production build:
+
+```bash
+npm run preview
+```
