@@ -5,7 +5,7 @@ import {
 import {
   DEFAULT_FUNDS, DEFAULT_PARAMS,
   calculateFundData, buildComparisonData, generateRecommendation, buildYearlyComparisonTable,
-  calcMonthlyDepositFromSalary,
+  calcMonthlyDepositFromSalary, buildOptimalPlanData, buildSavingsTable,
 } from './pensionCalc';
 import './App.css';
 
@@ -82,6 +82,18 @@ function App() {
   );
 
   const yearlyTable = useMemo(() => buildYearlyComparisonTable(funds, params), [funds, params]);
+
+  const optimalPlanData = useMemo(() => buildOptimalPlanData(funds, params), [funds, params]);
+
+  const savingsTable = useMemo(() => buildSavingsTable(funds, params), [funds, params]);
+
+  // Merge optimal plan data into comparison data for the chart
+  const comparisonDataWithOptimal = useMemo(() => {
+    return comparisonData.map((row, i) => ({
+      ...row,
+      optimal: optimalPlanData[i].optimalCumulative,
+    }));
+  }, [comparisonData, optimalPlanData]);
 
   const handleAddFund = (e) => {
     e.preventDefault();
@@ -406,39 +418,7 @@ function App() {
         </form>
       </section>
 
-      {/* Comparison Chart */}
-      <section className="section">
-        <h2>השוואת עמלות מצטברות לאורך השנים</h2>
-        <p className="chart-description">סה"כ דמי ניהול מצטברים שתשלמו לכל קרן עד כל שנה</p>
-        <div className="chart-container">
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={comparisonData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="year" stroke="#64748b" />
-              <YAxis
-                stroke="#64748b"
-                tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              {funds.map(fund => (
-                <Line
-                  key={fund.id}
-                  type="monotone"
-                  dataKey={fund.id}
-                  name={fund.name}
-                  stroke={fund.color}
-                  strokeWidth={2.5}
-                  dot={false}
-                  activeDot={{ r: 5 }}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-
-      {/* Recommendation Summary */}
+      {/* Recommendation Summary - ABOVE the chart since it's the most important */}
       <section className="section recommendation-section">
         <h2>סיכום המלצה</h2>
 
@@ -479,9 +459,9 @@ function App() {
           })}
         </div>
 
-        {/* Yearly comparison table */}
+        {/* Yearly comparison table - shows TOTAL yearly fees per fund */}
         <details className="yearly-table-details">
-          <summary>טבלת השוואה שנתית מפורטת (עמלות מצטברות)</summary>
+          <summary>טבלת השוואה שנתית מפורטת (סה"כ עמלות שנתיות לכל קרן)</summary>
           <div className="table-wrapper yearly-table-wrapper">
             <table className="funds-table yearly-table">
               <thead>
@@ -494,6 +474,7 @@ function App() {
                     </th>
                   ))}
                   <th>הזולה ביותר</th>
+                  <th className="optimal-header">עמלות מצטברות (תוכנית מומלצת)</th>
                 </tr>
               </thead>
               <tbody>
@@ -513,6 +494,9 @@ function App() {
                       <td className="cheapest-name" style={{ color: cheapestFund?.color }}>
                         {cheapestFund?.name}
                       </td>
+                      <td className="optimal-cell">
+                        {formatCurrency(row.optimalCumulative)}
+                      </td>
                     </tr>
                   );
                 })}
@@ -520,6 +504,84 @@ function App() {
             </table>
           </div>
         </details>
+      </section>
+
+      {/* Comparison Chart - with optimal plan line */}
+      <section className="section">
+        <h2>השוואת עמלות מצטברות לאורך השנים</h2>
+        <p className="chart-description">סה"כ דמי ניהול מצטברים שתשלמו לכל קרן עד כל שנה, כולל קו התוכנית המומלצת</p>
+        <div className="chart-container">
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={comparisonDataWithOptimal} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="year" stroke="#64748b" />
+              <YAxis
+                stroke="#64748b"
+                tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              {funds.map(fund => (
+                <Line
+                  key={fund.id}
+                  type="monotone"
+                  dataKey={fund.id}
+                  name={fund.name}
+                  stroke={fund.color}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+              ))}
+              <Line
+                type="monotone"
+                dataKey="optimal"
+                name="תוכנית מומלצת"
+                stroke="#10b981"
+                strokeWidth={3}
+                strokeDasharray="8 4"
+                dot={false}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+
+      {/* Savings Table - how much saved per fund by following recommendation */}
+      <section className="section savings-section">
+        <h2>כמה חוסכים לפי התוכנית המומלצת? (חיסכון מצטבר)</h2>
+        <p className="chart-description">לכל קרן, בכל שנה: סה"כ חיסכון מצטבר בעמלות אם עוקבים אחרי התוכנית המומלצת במקום להישאר תמיד באותה קרן. הסכום מייצג את ההפרש המצטבר בין סך העמלות שהיית משלם בקרן זו לבין סך העמלות לפי התוכנית המומלצת.</p>
+        <div className="table-wrapper yearly-table-wrapper">
+          <table className="funds-table yearly-table savings-table">
+            <thead>
+              <tr>
+                <th>שנה</th>
+                {funds.map(fund => (
+                  <th key={fund.id}>
+                    <span className="fund-color" style={{ background: fund.color }}></span>
+                    חיסכון מול {fund.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {savingsTable.map(row => (
+                <tr key={row.year}>
+                  <td className="year-cell">{row.year}</td>
+                  {funds.map(fund => (
+                    <td
+                      key={fund.id}
+                      className={row[fund.id] > 0 ? 'savings-positive' : 'savings-zero'}
+                    >
+                      {row[fund.id] > 0 ? formatCurrency(row[fund.id]) : '-'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {/* Per-Fund Breakdown Charts */}

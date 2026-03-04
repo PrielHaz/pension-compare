@@ -9,10 +9,24 @@ export const DEFAULT_FUNDS = [
   },
   {
     id: 'phoenix',
-    name: 'הפניקס',
+    name: 'הפניקס עם הטבות',
     color: '#f97316',
     accumulationFeePercent: 0.12,
     depositFeePercent: 1.3,
+  },
+  {
+    id: 'harel',
+    name: 'הראל',
+    color: '#10b981',
+    accumulationFeePercent: 0.15,
+    depositFeePercent: 1.5,
+  },
+  {
+    id: 'example',
+    name: 'דוגמא',
+    color: '#8b5cf6',
+    accumulationFeePercent: 0.10,
+    depositFeePercent: 1.6,
   },
 ];
 
@@ -181,8 +195,9 @@ export function generateRecommendation(funds, params) {
 }
 
 /**
- * Build a yearly comparison table: for each year show each fund's cumulative fees
- * and mark the cheapest.
+ * Build a yearly comparison table: for each year show each fund's TOTAL yearly fees
+ * (deposit fee + accumulation fee), mark the cheapest, and compute the optimal plan
+ * cumulative fees (always picking the cheapest fund each year).
  */
 export function buildYearlyComparisonTable(funds, params) {
   const allFundData = funds.map(fund => ({
@@ -192,22 +207,89 @@ export function buildYearlyComparisonTable(funds, params) {
 
   const { startYear, endYear } = params;
   const rows = [];
+  let optimalCumulative = 0;
 
   for (let year = startYear; year <= endYear; year++) {
     const yearIndex = year - startYear;
     const row = { year };
-    let minFees = Infinity;
+    let minTotalFee = Infinity;
     let cheapestId = null;
 
     allFundData.forEach(({ fund, data }) => {
-      row[fund.id] = data[yearIndex].cumulativeFees;
-      if (data[yearIndex].cumulativeFees < minFees) {
-        minFees = data[yearIndex].cumulativeFees;
+      // Store total yearly fee (deposit + accumulation) for each fund
+      row[fund.id] = data[yearIndex].totalFee;
+      if (data[yearIndex].totalFee < minTotalFee) {
+        minTotalFee = data[yearIndex].totalFee;
         cheapestId = fund.id;
       }
     });
 
+    // Accumulate the optimal plan: always pick cheapest fund's yearly fee
+    optimalCumulative += minTotalFee;
+    row.optimalCumulative = Math.round(optimalCumulative);
     row.cheapestId = cheapestId;
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+/**
+ * Build optimal plan cumulative fees data for the comparison chart.
+ * For each year, pick the cheapest fund's yearly fee and accumulate.
+ * Returns an array of { year, optimalCumulative }.
+ */
+export function buildOptimalPlanData(funds, params) {
+  const allFundData = funds.map(fund => ({
+    fund,
+    data: calculateFundData(fund, params),
+  }));
+
+  const { startYear, endYear } = params;
+  const result = [];
+  let optimalCumulative = 0;
+
+  for (let year = startYear; year <= endYear; year++) {
+    const yearIndex = year - startYear;
+    let minTotalFee = Infinity;
+
+    allFundData.forEach(({ fund, data }) => {
+      if (data[yearIndex].totalFee < minTotalFee) {
+        minTotalFee = data[yearIndex].totalFee;
+      }
+    });
+
+    optimalCumulative += minTotalFee;
+    result.push({ year, optimalCumulative: Math.round(optimalCumulative) });
+  }
+
+  return result;
+}
+
+/**
+ * Build savings table: for each fund, for each year, show how much you save
+ * by following the optimal recommendation plan vs staying with that fund always.
+ * savings = fund's cumulative fees - optimal plan cumulative fees
+ */
+export function buildSavingsTable(funds, params) {
+  const allFundData = funds.map(fund => ({
+    fund,
+    data: calculateFundData(fund, params),
+  }));
+
+  const optimalData = buildOptimalPlanData(funds, params);
+  const { startYear, endYear } = params;
+  const rows = [];
+
+  for (let year = startYear; year <= endYear; year++) {
+    const yearIndex = year - startYear;
+    const row = { year };
+
+    allFundData.forEach(({ fund, data }) => {
+      // Savings = what you'd pay staying with this fund - what you'd pay with optimal plan
+      row[fund.id] = Math.round(data[yearIndex].cumulativeFees - optimalData[yearIndex].optimalCumulative);
+    });
+
     rows.push(row);
   }
 

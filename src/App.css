@@ -484,6 +484,36 @@
   font-size: 0.82rem;
 }
 
+/* Optimal plan column */
+.optimal-header {
+  background: #ecfdf5 !important;
+  color: #065f46 !important;
+  font-weight: 700;
+}
+.optimal-cell {
+  background: #ecfdf5;
+  color: #065f46;
+  font-weight: 600;
+}
+
+/* ===== Savings Table ===== */
+.savings-section {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+.savings-table th {
+  font-size: 0.8rem;
+}
+.savings-positive {
+  color: #166534;
+  font-weight: 700;
+  background: #dcfce7;
+}
+.savings-zero {
+  color: #94a3b8;
+  text-align: center;
+}
+
 /* ===== Per-Fund Charts ===== */
 .fund-charts-grid {
   display: grid;
