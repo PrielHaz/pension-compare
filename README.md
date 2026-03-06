@@ -5,9 +5,6 @@ A small, free web simulator to help compare pension fund management fees (קרן
 Live app:
 https://pension-compare.netlify.app/
 
-GitHub repo:
-https://github.com/PrielHaz/pension-compare
-
 ## Why
 
 When comparing pension funds, it’s hard to reason about which fee matters more:

@@ -131,7 +131,7 @@ export function buildComparisonData(funds, params) {
 }
 
 /**
- * Generate recommendation summary: for each year, find cheapest fund.
+ * Generate recommendation summary: for each year, find cheapest fund by yearly total fee.
  * Returns array of { fromYear, toYear, fundName, fundId, cumulativeAtEnd }
  */
 export function generateRecommendation(funds, params) {
@@ -143,34 +143,39 @@ export function generateRecommendation(funds, params) {
   const ranges = [];
   let currentCheapest = null;
   let rangeStart = null;
+  let optimalCumulative = 0;
+  // Track optimal cumulative per year so we can report it at range boundaries
+  const optimalCumulativeByYear = [];
 
   const { startYear, endYear } = params;
 
   for (let year = startYear; year <= endYear; year++) {
     const yearIndex = year - startYear;
 
-    // Find cheapest fund for this year (by cumulative fees)
+    // Find cheapest fund for this year (by yearly total fee — same logic as the yearly table)
     let minFees = Infinity;
     let cheapestFund = null;
 
     allFundData.forEach(({ fund, data }) => {
-      if (data[yearIndex].cumulativeFees < minFees) {
-        minFees = data[yearIndex].cumulativeFees;
+      if (data[yearIndex].totalFee < minFees) {
+        minFees = data[yearIndex].totalFee;
         cheapestFund = fund;
       }
     });
 
+    optimalCumulative += minFees;
+    optimalCumulativeByYear.push(Math.round(optimalCumulative));
+
     if (!currentCheapest || currentCheapest.id !== cheapestFund.id) {
       if (currentCheapest) {
-        // Get cumulative fees at the end of the previous range
+        // Report optimal cumulative fees at the end of the previous range
         const prevYearIndex = year - 1 - startYear;
-        const cumulativeAtEnd = allFundData.find(d => d.fund.id === currentCheapest.id).data[prevYearIndex].cumulativeFees;
         ranges.push({
           fromYear: rangeStart,
           toYear: year - 1,
           fundName: currentCheapest.name,
           fundId: currentCheapest.id,
-          cumulativeAtEnd,
+          cumulativeAtEnd: optimalCumulativeByYear[prevYearIndex],
         });
       }
       currentCheapest = cheapestFund;
@@ -181,13 +186,12 @@ export function generateRecommendation(funds, params) {
   // Push last range
   if (currentCheapest) {
     const lastYearIndex = endYear - startYear;
-    const cumulativeAtEnd = allFundData.find(d => d.fund.id === currentCheapest.id).data[lastYearIndex].cumulativeFees;
     ranges.push({
       fromYear: rangeStart,
       toYear: endYear,
       fundName: currentCheapest.name,
       fundId: currentCheapest.id,
-      cumulativeAtEnd,
+      cumulativeAtEnd: optimalCumulativeByYear[lastYearIndex],
     });
   }
 
