@@ -32,7 +32,7 @@ export const DEFAULT_FUNDS = [
 
 export const DEFAULT_PARAMS = {
   depositMode: 'salary',        // 'salary' or 'manual'
-  salary: 14000,                // gross monthly salary in NIS
+  salary: 15000,                // gross monthly salary in NIS
   employeePercent: 6,           // employee contribution % (הפקדת עובד)
   employerBenefitPercent: 6.5,  // employer benefit contribution % (הפקדת מעסיק תגמולים)
   employerSeverancePercent: 8.33, // employer severance contribution % (הפקדת מעסיק פיצויים)
